@@ -1,0 +1,292 @@
+Course Project – Internet Development Environments
+Grandma’s Recipes and Others – General Project Description
+The course project is divided into three different parts, submitted one after the other, each building on the previous. At the end, there will be an oral exam on the project. The project must be done in pairs only.
+
+At the end of the course, you will have a Full-stack product you can present in job interviews as a project you implemented yourself.
+
+The project simulates a situation where you are full-stack developers who receive an initial Product Requirements Document (PRD) and must start implementing the assigned project.
+
+Note:
+As part of the project requirements, some requirements are marked as bonuses.
+
+Implement these only after you have completed all the mandatory parts.
+
+The bonus is awarded only if all mandatory parts are done.
+
+You can start the bonus part at any point in the project, but must complete previous stages as well. No credit will be given for partial implementation.
+For example, if you decide to start implementing the additions in part 3.2, you must also implement and submit the requirements for part 3.1.
+
+The project consists of the following submission parts:
+
+3.1 Assignment: Writing an API Requirements Document (no grade)
+i. The purpose of this document is to create a "contract" between two parties, agreeing on what resources the server exposes, how to access/request them, and how the server responds.
+ii. You must define, for each side, what is its responsibility: client-side and server-side, according to the requirements in this document.
+iii. Throughout the project, if you feel you need to change the API for better implementation, you may do so, but you must document all the changes made during your work.
+
+3.2 Assignment: Implementing the Backend (45% of the project)
+i. In this part you will implement the server (Node.js + Express.js) and the database (MySQL).
+ii. The implementation should respond to the API requirements you wrote.
+iii. In this part, you will use an external API that allows searching for recipes and other related details.
+
+3.3 Assignment: Implementing the Frontend (55% of the project)
+i. In this part you will implement the client side (Vue.js).
+ii. The implementation should respond to the API requirements you wrote.
+
+General and Important Points
+Implement the project according to the guiding principles taught in the course.
+
+For requirements not precisely specified, you must make an informed decision based on the course material. You will need to justify your decisions in the project evaluation; any reasoned decision will be accepted.
+
+Read all requirements carefully before implementing each part. Each part of the project will have specific highlights published for it.
+
+For each part, think carefully about what you want to implement on the server side and what on the client side. Key considerations are security, performance, and storage.
+
+Requirements Specification Document for "Grandma’s Recipes and Others" Project
+The client's requirement for the project is a system for searching recipes from an existing recipe database.
+
+For each recipe, the system will display: the recipe details, preparation instructions, and the option to track the preparation steps.
+
+Each user will have a personal area where they can save family recipes.
+The purpose: to preserve oral recipes and gather all recipe notes in one place.
+
+The following requirement is repeated for every "Recipe Preview" component on the site:
+For each recipe on the site, show a preview including:
+
+Its image
+
+Its name/title
+
+The preparation time
+
+The number of likes (popularity)
+
+Vegetarian/Vegan indication
+
+Gluten-free indication
+
+Indication if the user has already viewed the recipe (clicked to see the details)
+
+Indication if the user has added the recipe to their favorites (no need to handle removal, only adding)
+
+On hovering over the image, show the indicator; clicking the image takes the user to the recipe page. The image should be styled clearly as clickable.
+
+Example implementation hints and relevant resources:
+BootstrapVue Tooltip
+
+CSS Image Overlay Example
+
+Main Pages
+2. Navigation Bar
+The app will have a navigation bar with tabs, for example:
+
+For everyone:
+
+Recipes (main page)
+
+Search
+
+About
+
+For guests (not logged in):
+
+Message: "hello guest"
+
+Link to login
+
+Link to register
+
+For logged-in users:
+
+Their name
+
+"Personal Area" dropdown with:
+
+My Favorites
+
+My Recipes
+
+My Family Recipes
+
+Logout button
+
+Link to create a new recipe
+
+You may implement a vertical navigation bar if you wish. Use existing popular sites for inspiration.
+
+3. About Page
+Should include a marketing summary about the development team and the project, with links to previous assignments.
+
+4. Register Page
+For user registration, collect the following details:
+
+Username
+
+First Name
+
+Last Name
+
+Country
+
+Password
+
+Password confirmation (same password again)
+
+Email
+
+Country: Possible values should be taken from https://restcountries.com/v3.1/all
+
+Username must be 3-8 letters long and contain letters only.
+
+Password must be 5-10 characters, with at least one number and one special character.
+
+After registration, redirect the user to the login page.
+
+Usernames are unique – you cannot register two users with the same username. If a username is taken, display an appropriate message and prompt for a different one.
+
+5. Login Page
+For user login, collect:
+
+Username
+
+Password
+
+Include a link to the register page.
+
+6. Main Recipes Page
+This page is split into two columns:
+
+Left column: Shows 3 random recipes from the database under the title "Explore these recipes".
+At the bottom, a button to fetch 3 new random recipes.
+
+Right column:
+
+For logged-in users: shows the last 3 recipes the user viewed ("Last watched recipes").
+
+For guests: show the option to log in/register.
+
+7. Recipe Details Page
+User arrives here by clicking a recipe image.
+
+Display:
+
+Recipe preview (all preview details)
+
+List of ingredients and their amounts
+
+Preparation instructions
+
+Number of servings
+
+Bonus:
+Add a button to start cooking/preparation, which will take the user to the preparation page and add the recipe to the meal plan.
+
+8. Recipe Search Page
+User arrives here by clicking the search link in the navigation bar.
+
+Page includes:
+
+A search box for recipes
+
+Search results displayed below
+
+If the user is logged in on the same browser, show their last search as long as they're logged in (not if they log in from another browser/device).
+
+By default, show 5/10/15 results per search, user can choose how many (results returned from server).
+
+All search results should include preparation instructions.
+
+Allow search by recipe/food name and filter by:
+
+Cuisine (spoonacular API: cuisines)
+
+Diet (spoonacular API: diets)
+
+Intolerances (spoonacular API: intolerances)
+
+The filters appear in a dropdown; if the user selects filter values, they’re sent to the server with the search.
+
+When search results return from the server:
+
+Display preview details for each recipe
+
+Allow sorting by preparation time and popularity
+
+If no results, show an appropriate message
+
+Clicking a recipe image opens the Recipe Details page
+
+9. Modal for Creating a New Recipe
+When a user clicks the "create recipe" button, open a modal with a form for all recipe details (same as in the Recipe Details page) so that user-added recipes have the same format as database recipes.
+
+New recipes are saved in the database
+
+New recipes are displayed to the user under "My Recipes" in their personal area
+
+10. My Favorites Page
+List all recipes the user marked as favorites, with a preview for each.
+
+11. My Recipes Page
+List all recipes created by the user, with a preview for each.
+
+12. My Family Recipes Page
+Show at least 3 of your family recipes in this page.
+
+Here, you are encouraged to involve your family (grandparents, uncles, etc.) and get family recipes that are passed down generations, or are made for special family events.
+
+The minimum to display for each family recipe:
+
+Who the recipe is from
+
+When it’s usually made in the family
+
+Ingredients
+
+Preparation instructions
+
+It's highly recommended to add a picture of the dish, a family member with the dish, or pictures from different preparation stages.
+
+13. Bonus: Recipe Preparation Page
+The user reaches this page by clicking "Start Cooking" on a recipe.
+
+This page shows the steps for preparing the recipe, and the required ingredients.
+
+The API to use for this component: Spoonacular recipe and food API
+
+For all fields except “id,” you must use the fields as provided in the API.
+
+Allow the user to multiply the number of servings, which will update the ingredient amounts accordingly.
+
+For all user-added recipes (new/family), you must store compatible data to match this API structure so these recipes work in this component as well.
+
+The user’s progress in the recipe preparation is saved as long as they are logged in; if they log out, progress resets.
+
+Next to each step, show a checkbox for the user to mark as complete.
+
+14. Bonus: Meal Planning Page
+On every recipe page, add a button: "Add to Next Meal".
+
+All selected recipes appear in this page.
+
+Every recipe started for preparation is added to the list.
+
+In the navigation bar, show an indication of how many recipes are in the meal plan; the number updates as recipes are added/removed.
+
+The list is numbered according to the order the user plans to cook.
+
+The user can change the order of recipes in the meal plan.
+
+The user can remove a recipe from the plan.
+
+Next to each recipe, show a progress bar reflecting preparation status (e.g., “2 out of 5 steps completed”).
+
+The user can clear the meal plan with a single click.
+
+The meal plan is saved for the user and is available wherever they log in, as long as they're logged in.
+
+Useful links for UI components:
+
+BootstrapVue Modal
+
+BootstrapVue Progress Bar
+
+Spoonacular Get Analyzed Recipe Instructions
