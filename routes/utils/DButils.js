@@ -17,6 +17,3 @@ exports.execQuery = async function (query, params = []) {
   }
 };
 
-
-
-

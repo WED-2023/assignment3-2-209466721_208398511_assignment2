@@ -69,30 +69,95 @@ router.get("/previews", async (req, res, next) => {
   }
 });
 
+// Get last viewed recipes - MUST come before /:recipeId route
+
+router.get('/last-viewed', async (req, res, next) => {
+  try {
+    const userId = req.user_id;
+    // Get last 3 viewed recipes (any type)
+    const viewed = await db.query(
+      'SELECT recipe_id, family_recipe_id, external_recipe_id FROM views WHERE user_id = ? ORDER BY id DESC LIMIT 3',
+      [userId]
+    );
+    
+    // If no viewed recipes, return empty array
+    if (!viewed || viewed.length === 0) {
+      return res.json([]);
+    }
+    
+    // Fetch the correct preview for each type
+    const recipes = await Promise.all(viewed.map(async v => {
+      if (v.recipe_id) {
+        return recipes_utils.getRecipePreviewById(v.recipe_id, userId);
+      } else if (v.family_recipe_id) {
+        return recipes_utils.getFamilyRecipePreviewById(v.family_recipe_id, userId);
+      } else if (v.external_recipe_id) {
+        return recipes_utils.getSpoonacularRecipePreview(v.external_recipe_id);
+      }
+      return null;
+    }));
+    
+    // Filter out any null recipes and return
+    const validRecipes = recipes.filter(r => r !== null);
+    res.json(validRecipes);
+  } catch (error) {
+    next(error);
+  }
+});
+
 /**
  * This path returns a full details of a recipe by its id
  */
 
 router.get("/:recipeId", async (req, res, next) => {
   try {
-    const recipe = await recipes_utils.getRecipeDetails(req.params.recipeId);
-    // Mark as viewed
+    const recipeId = Number(req.params.recipeId); // Ensure recipeId is a number
     const userId = req.user_id;
-    const recipeId = req.params.recipeId;
-    if (userId) {
-      // Check if already viewed
-      const existing = await db.query(
-        `SELECT id FROM views WHERE user_id = ? AND recipe_id = ?`,
-        [userId, recipeId]
-      );
-      if (!existing.length) {
-        await db.query(
-          `INSERT INTO views (user_id, recipe_id) VALUES (?, ?)`,
+
+    // Try to get as a local recipe (direct DB query)
+    const [localRecipe] = await db.query(
+      "SELECT * FROM recipes WHERE id = ?",
+      [recipeId]
+    );
+
+    if (localRecipe) {
+      // Mark as viewed for local recipe
+      if (userId) {
+        const existing = await db.query(
+          `SELECT id FROM views WHERE user_id = ? AND recipe_id = ?`,
           [userId, recipeId]
         );
+        if (!existing.length) {
+          await db.query(
+            `INSERT INTO views (user_id, recipe_id) VALUES (?, ?)` ,
+            [userId, recipeId]
+          );
+        }
+      }
+      // Use your existing getRecipeDetails to format the response
+      const recipe = await recipes_utils.getRecipeDetails(recipeId);
+      return res.send(recipe);
+    } else {
+      // Try as external recipe
+      try {
+        const externalRecipe = await recipes_utils.getRecipeInformation(recipeId);
+        if (userId) {
+          const existing = await db.query(
+            `SELECT id FROM views WHERE user_id = ? AND external_recipe_id = ?`,
+            [userId, recipeId]
+          );
+          if (!existing.length) {
+            await db.query(
+              `INSERT INTO views (user_id, external_recipe_id) VALUES (?, ?)`,
+              [userId, recipeId]
+            );
+          }
+        }
+        return res.send(externalRecipe.data);
+      } catch (externalError) {
+        return res.status(404).json({ message: "Recipe not found" });
       }
     }
-    res.send(recipe);
   } catch (error) {
     next(error);
   }
@@ -136,6 +201,51 @@ router.post("/", async (req, res, next) => {
   }
 });
 
+// Edit a recipe (only by creator)
+router.put('/:recipeId', async (req, res, next) => {
+  try {
+    const recipeId = Number(req.params.recipeId);
+    const userId = req.user_id;
+    // Check ownership
+    const [localRecipe] = await db.query("SELECT * FROM recipes WHERE id = ?", [recipeId]);
+    if (!localRecipe) return res.status(404).json({ message: 'Recipe not found' });
+    if (localRecipe.user_id !== userId) return res.status(403).json({ message: 'Forbidden' });
+    // Update recipe
+    const { title, image, prep_time, servings, instructions, is_vegan, is_vegetarian, is_gluten_free, ingredients } = req.body;
+    await db.query(
+      `UPDATE recipes SET title=?, image=?, prep_time=?, servings=?, instructions=?, is_vegan=?, is_vegetarian=?, is_gluten_free=? WHERE id=?`,
+      [title, image, prep_time, servings, instructions, is_vegan, is_vegetarian, is_gluten_free, recipeId]
+    );
+    // Update ingredients: delete old, insert new
+    await db.query(`DELETE FROM ingredients WHERE recipe_id=? AND is_family_recipe=false`, [recipeId]);
+    for (const ing of ingredients) {
+      await db.query(
+        `INSERT INTO ingredients (recipe_id, ingredient, quantity, is_family_recipe) VALUES (?, ?, ?, false)`,
+        [recipeId, ing.ingredient, ing.quantity]
+      );
+    }
+    res.json({ message: 'Recipe updated successfully' });
+  } catch (error) {
+    next(error);
+  }
+});
 
+// Delete a recipe (only by creator)
+router.delete('/:recipeId', async (req, res, next) => {
+  try {
+    const recipeId = Number(req.params.recipeId);
+    const userId = req.user_id;
+    // Check ownership
+    const [localRecipe] = await db.query("SELECT * FROM recipes WHERE id = ?", [recipeId]);
+    if (!localRecipe) return res.status(404).json({ message: 'Recipe not found' });
+    if (localRecipe.user_id !== userId) return res.status(403).json({ message: 'Forbidden' });
+    // Delete recipe and its ingredients
+    await db.query(`DELETE FROM ingredients WHERE recipe_id=? AND is_family_recipe=false`, [recipeId]);
+    await db.query(`DELETE FROM recipes WHERE id=?`, [recipeId]);
+    res.json({ message: 'Recipe deleted successfully' });
+  } catch (error) {
+    next(error);
+  }
+});
 
 module.exports = router;

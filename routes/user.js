@@ -39,11 +39,24 @@ router.get('/favorites', async (req, res, next) => {
 router.post('/favorites', async (req, res, next) => {
   try {
     const user_id = req.session.user_id;
-    const { recipe_id, external_recipe_id } = req.body;
-    if (!recipe_id && !external_recipe_id) {
-      return res.status(400).json({ message: "Missing recipe_id or external_recipe_id" });
+    const { recipe_id, external_recipe_id, family_recipe_id } = req.body;
+    console.log('Favorites request:', { user_id, recipe_id, external_recipe_id, family_recipe_id });
+    
+    if (!recipe_id && !external_recipe_id && !family_recipe_id) {
+      return res.status(400).json({ message: "Missing recipe_id, external_recipe_id, or family_recipe_id" });
     }
-    await user_utils.markAsFavorite(user_id, recipe_id, external_recipe_id);
+    
+    if (external_recipe_id) {
+      console.log('Marking external recipe as favorite:', external_recipe_id);
+      await user_utils.markAsFavorite(user_id, external_recipe_id, true, false);
+    } else if (family_recipe_id) {
+      console.log('Marking family recipe as favorite:', family_recipe_id);
+      await user_utils.markAsFavorite(user_id, family_recipe_id, false, true);
+    } else {
+      console.log('Marking local recipe as favorite:', recipe_id);
+      await user_utils.markAsFavorite(user_id, recipe_id, false, false);
+    }
+    
     res.status(201).json({ message: "Recipe marked as favorite!" });
   } catch (error) {
     next(error);

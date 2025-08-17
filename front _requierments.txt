@@ -1,0 +1,55 @@
+Project – Internet Development Environments
+Assignment 3.3 – Frontend Development
+In this part of the project, you will develop the client side according to the API you wrote and the specification you received.
+
+Tips for Working:
+It is recommended to watch the following tutorial to see a full flow and usage of design libraries:
+YouTube Tutorial
+
+It is recommended to use existing and ready-made design libraries. This is common practice in the industry. You can copy designs and ready-made components from there, allowing you to focus on the logic and macro design of your app, and not on writing basic components that have already been developed:
+
+The basic Bootstrap library is more than sufficient:
+Bootstrap Navs Documentation
+
+For Vue, Bootstrap-vue also includes smarter components that allow the use of binding:
+Bootstrap-vue Buttons Documentation
+
+Recommendation: Divide the implementation between you; a good division is implementing different pages. Share the code together on Git. Saving the code to Git after every part you develop ensures that mistakes will not cause you to lose or damage working code.
+
+General Instructions for the Assignment:
+Development must be done in Vue.js only, using vue-cli as the project base.
+
+You must adhere to the development rules and emphases taught for client-side development in Vue.js during lectures and tutorials.
+
+It is recommended to use design libraries such as Bootstrap.
+
+Note: You must do input validation during client registration and provide appropriate feedback during registration attempts.
+
+You must write clean and correct code.
+
+Maintain a correct folder structure.
+
+Separation into components is important!
+
+Separate into files and sub-components.
+
+Maintain a clear separation between global and local scope.
+
+Use components wisely; if in doubt, it probably should be a component.
+
+Use meaningful variable names.
+
+Minimize inline writing in the template itself. Wherever possible, logic should be in .methods or computed.
+
+Basic and above design – part of the grade will be given for design, of course.
+
+Ensure data is stored in the correct places: local-storage, in-app, server, etc.
+
+The assignment must be submitted in the same pairs that started the project.
+
+You must implement the client side according to the API you wrote, and implement functionality according to the requirements specification you received.
+
+If you want to change the implementation of previous parts, that's fine, as long as you ensure the API document and the server match your implementation.
+
+Questions about the assignment can be asked in the designated forum – it is mandatory to register for forum updates and to stay updated on messages and clarifications published in the forum.
+

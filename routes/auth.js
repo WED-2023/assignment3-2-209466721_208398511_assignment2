@@ -18,8 +18,8 @@ router.post("/Register", async (req, res, next) => {
     console.log("Received /Register request");
     let user_details = {
       username: req.body.username,
-      firstname: req.body.firstname,
-      lastname: req.body.lastname,
+      first_name: req.body.first_name,
+      last_name: req.body.last_name,
       country: req.body.country,
       password: req.body.password,
       email: req.body.email
@@ -52,8 +52,8 @@ router.post("/Register", async (req, res, next) => {
       `INSERT INTO users (username, first_name, last_name, country, password, email) VALUES (?, ?, ?, ?, ?, ?)`,
       [ 
         user_details.username,
-        user_details.firstname,
-        user_details.lastname,
+        user_details.first_name,
+        user_details.last_name,
         user_details.country,
         hash_password,
         user_details.email

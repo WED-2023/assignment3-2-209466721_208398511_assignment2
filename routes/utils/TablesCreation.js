@@ -60,6 +60,7 @@ async function createTables() {
         is_family_recipe BOOLEAN DEFAULT FALSE,
         FOREIGN KEY (recipe_id) REFERENCES recipes(id) ON DELETE CASCADE
         )`);
+
     await connection.query(`CREATE TABLE favorites (
         user_id INT NOT NULL,
         recipe_id INT,

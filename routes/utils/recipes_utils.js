@@ -21,20 +21,55 @@ async function getRecipeInformation(recipe_id) {
 
 
 async function getRecipeDetails(recipe_id) {
+    // Try to get as a local recipe
+    try {
+        const [localRecipe] = await db.query(
+          "SELECT * FROM recipes WHERE id = ?",
+          [recipe_id]
+        );
+        console.log('Local recipe lookup:', localRecipe);
+        if (localRecipe) {
+            // Get ingredients
+            const ingredients = await db.query(
+              "SELECT ingredient, quantity FROM ingredients WHERE recipe_id = ? AND is_family_recipe = false",
+              [recipe_id]
+            );
+            console.log('Ingredients lookup:', ingredients);
+            return {
+                id: localRecipe.id,
+                title: localRecipe.title,
+                image: localRecipe.image,
+                servings: localRecipe.servings,
+                prep_time: localRecipe.prep_time,
+                instructions: localRecipe.instructions,
+                is_vegan: !!localRecipe.is_vegan,
+                is_vegetarian: !!localRecipe.is_vegetarian,
+                is_gluten_free: !!localRecipe.is_gluten_free,
+                ingredients: ingredients,
+                source: 'local'
+            };
+        }
+    } catch (err) {
+        console.error('Error in getRecipeDetails (local):', err);
+        throw err;
+    }
+    // Fallback to Spoonacular
     let recipe_info = await getRecipeInformation(recipe_id);
-    let { id, title, readyInMinutes, image, aggregateLikes, vegan, vegetarian, glutenFree } = recipe_info.data;
-
+    let { id, title, readyInMinutes, image, aggregateLikes, vegan, vegetarian, glutenFree, servings, instructions, extendedIngredients } = recipe_info.data;
     return {
         id: id,
         title: title,
-        readyInMinutes: readyInMinutes,
         image: image,
+        servings: servings,
+        prep_time: readyInMinutes,
+        instructions: Array.isArray(instructions) ? instructions.join('\n') : instructions,
+        is_vegan: vegan,
+        is_vegetarian: vegetarian,
+        is_gluten_free: glutenFree,
+        ingredients: extendedIngredients ? extendedIngredients.map(ing => ({ ingredient: ing.name, quantity: ing.amount + ' ' + ing.unit })) : [],
         popularity: aggregateLikes,
-        vegan: vegan,
-        vegetarian: vegetarian,
-        glutenFree: glutenFree,
-        
-    }
+        source: 'spoonacular'
+    };
 }
 
 async function createRecipe({
@@ -122,19 +157,27 @@ async function getRecipePreviews(userId) {
 
 
 async function getSpoonacularRecipePreview(recipe_id) {
+  try {
     const { data } = await getRecipeInformation(recipe_id);
     return {
-        id: data.id,
-        title: data.title,
-        image: data.image,
-        prep_time: data.readyInMinutes,
-        likes: data.aggregateLikes,
-        is_vegan: data.vegan,
-        is_vegetarian: data.vegetarian,
-        is_gluten_free: data.glutenFree,
-        viewed: false,
-        favorited: false
+      id: data.id,
+      title: data.title,
+      image: data.image,
+      prep_time: data.readyInMinutes,
+      likes: data.aggregateLikes,
+      is_vegan: data.vegan,
+      is_vegetarian: data.vegetarian,
+      is_gluten_free: data.glutenFree,
+      viewed: false,
+      favorited: false
     };
+  } catch (err) {
+    if (err.response && err.response.status === 404) {
+      // Recipe not found on Spoonacular, return null
+      return null;
+    }
+    throw err;
+  }
 }
 
 async function getRandomSpoonacularRecipes(n) {
@@ -156,13 +199,14 @@ async function getRandomSpoonacularRecipes(n) {
 }
 async function searchSpoonacularRecipes({ query, number = 10, cuisine, diet, intolerances }) {
   const params = {
-    apiKey: process.env.spoonacular_apiKey,
+    apiKey: process.env.spooncular_apiKey,
     query,
     number,
     ...(cuisine ? { cuisine } : {}),
     ...(diet ? { diet } : {}),
     ...(intolerances ? { intolerances } : {})
   };
+
   const { data } = await axios.get(`${api_domain}/complexSearch`, { params });
   return data.results.map(r => ({
     id: r.id,
@@ -227,6 +271,48 @@ async function getUserRecipes(userId) {
   return recipes;
 }
 
+async function getFamilyRecipePreviewById(familyRecipeId, userId) {
+  const [recipe] = await db.query(
+    `
+    SELECT
+      fr.id,
+      fr.title,
+      fr.image,
+      fr.prep_time,
+      fr.is_vegan,
+      fr.is_vegetarian,
+      fr.is_gluten_free,
+      fr.servings,
+      IFNULL(fav.likes, 0) AS likes,
+      CASE WHEN v.user_id IS NULL THEN FALSE ELSE TRUE END AS viewed,
+      CASE WHEN f2.user_id IS NULL THEN FALSE ELSE TRUE END AS favorited
+    FROM family_recipes fr
+      LEFT JOIN (SELECT family_recipe_id, COUNT(*) AS likes FROM favorites GROUP BY family_recipe_id) fav
+        ON fr.id = fav.family_recipe_id
+      LEFT JOIN views v
+        ON fr.id = v.family_recipe_id AND v.user_id = ?
+      LEFT JOIN favorites f2
+        ON fr.id = f2.family_recipe_id AND f2.user_id = ?
+    WHERE fr.id = ?
+    `,
+    [userId, userId, familyRecipeId]
+  );
+  if (!recipe) return null;
+  return {
+    id: recipe.id,
+    title: recipe.title,
+    image: recipe.image,
+    prep_time: recipe.prep_time,
+    likes: recipe.likes,
+    is_vegan: !!recipe.is_vegan,
+    is_vegetarian: !!recipe.is_vegetarian,
+    is_gluten_free: !!recipe.is_gluten_free,
+    viewed: !!recipe.viewed,
+    favorited: !!recipe.favorited,
+    is_family: true
+  };
+}
+
 module.exports = {
     getRecipeInformation,
     getRecipeDetails,
@@ -236,7 +322,8 @@ module.exports = {
     getRandomSpoonacularRecipes,
     searchSpoonacularRecipes,
     getUserRecipes,
-    getRecipePreviewById
+    getRecipePreviewById,
+    getFamilyRecipePreviewById
 };
 
 
